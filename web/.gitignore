@@ -1,0 +1,10 @@
+node_modules
+.next
+public/bench
+public/pyodide
+public/scenarios
+public/plugins-examples
+.env
+.env.local
+*.tsbuildinfo
+next-env.d.ts
