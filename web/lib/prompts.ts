@@ -8,7 +8,8 @@ export const SCENARIO_SCHEMA = `{
                               // step_cost = time steps per cell (1 fast, 2 half speed); payload compared with product weight
   "products": [ { "id": "P1", "route": ["M1","M2"], "weight": number, "process_time": { "M1": number, "M2": number } } ],
   "events": [ { "t": number, "type": "block_cells", "cells": [[x,y]], "until": number|null }
-            | { "t": number, "type": "robot_failure", "robot": "R1" } ]
+            | { "t": number, "type": "robot_failure", "robot": "R1" }
+            | { "t": number, "type": "robot_recovered", "robot": "R1" } ]
 }`;
 
 export const ALGORITHM_CONTRACT = `An algorithm is ONE Python file (standard library only) with an INFO dict and ONE function.

@@ -92,6 +92,8 @@ def validate(sc):
     for p in sc["products"]:
         if not any(robot_can_carry(r, p) for r in sc["robots"]):
             err(f"no robot can carry product {p['id']}")
+    _validate_ids_and_values(sc, err, warn)
+    _validate_events(sc, err, warn)
     if not any(e for e in issues if e["level"] == "error"):
         base = sc["stations"][sc["raw_material"]]
         reach = bfs_dist(grid, base)
@@ -102,6 +104,93 @@ def validate(sc):
             if r["start"] not in reach:
                 err(f"robot {r['id']} start is not connected to the factory floor")
     return issues
+
+
+def _dupes(ids):
+    seen, out = set(), []
+    for i in ids:
+        if i in seen and i not in out:
+            out.append(i)
+        seen.add(i)
+    return out
+
+
+def _num(v):
+    return isinstance(v, (int, float)) and not isinstance(v, bool)
+
+
+def _validate_ids_and_values(sc, err, warn):
+    """Checks for things a hand-edited plan (Plan editor, or raw JSON) can get wrong."""
+    if not sc["robots"]:
+        err("the plan has no robots")
+    if not sc["products"]:
+        warn("the plan has no products, so there is nothing to transport")
+    for d in _dupes([r["id"] for r in sc["robots"]]):
+        err(f"robot id {d} is used more than once")
+    for d in _dupes([p["id"] for p in sc["products"]]):
+        err(f"product id {d} is used more than once")
+    cells = {}
+    for name, c in sc["stations"].items():
+        if c in cells:
+            warn(f"stations {cells[c]} and {name} share the cell {list(c)}")
+        cells.setdefault(c, name)
+    if sc.get("finished_goods") not in sc["stations"]:
+        warn("no finished-goods station (FG): products end at their last machine")
+    product_ids = {p["id"] for p in sc["products"]}
+    stores = {sc.get("raw_material"), sc.get("finished_goods")}
+    for r in sc["robots"]:
+        if not _num(r.get("payload")) or r["payload"] < 0:
+            err(f"robot {r['id']}: payload must be a number >= 0")
+        cc = r.get("can_carry")
+        if cc is not None:
+            if not cc:
+                warn(f"robot {r['id']} may carry no product, so it will never be used")
+            for pid in cc:
+                if pid not in product_ids:
+                    warn(f"robot {r['id']} lists unknown product {pid} in can_carry")
+    for p in sc["products"]:
+        if not p["route"]:
+            err(f"product {p['id']} has an empty route")
+        if not _num(p.get("weight")) or p["weight"] < 0:
+            err(f"product {p['id']}: weight must be a number >= 0")
+        for m in p["route"]:
+            if m in stores:
+                err(f"product {p['id']} route uses store {m}; routes list machines only (RM and FG are added automatically)")
+        for m, v in p["process_time"].items():
+            if not _num(v) or v < 0 or int(v) != v:
+                err(f"product {p['id']}: process time at {m} must be a whole number >= 0")
+
+
+def _validate_events(sc, err, warn):
+    robot_ids = {r["id"] for r in sc["robots"]}
+    grid = sc["grid"]
+    for i, e in enumerate(sc.get("events", [])):
+        label = f"event {i + 1} ({e.get('type', '?')})"
+        t = e.get("t")
+        if not _num(t) or t < 0 or int(t) != t:
+            err(f"{label}: time t must be a whole number >= 0")
+            continue
+        kind = e.get("type")
+        if kind in ("robot_failure", "robot_recovered"):
+            if e.get("robot") not in robot_ids:
+                err(f"{label}: unknown robot {e.get('robot')}")
+        elif kind == "block_cells":
+            cells = e.get("cells") or []
+            if not cells:
+                err(f"{label}: no cells to block")
+            for c in cells:
+                try:
+                    cc = cell(c)
+                except (TypeError, ValueError, IndexError):
+                    err(f"{label}: {c} is not an [x, y] cell")
+                    continue
+                if is_wall(grid, cc):
+                    warn(f"{label}: cell {list(cc)} is a wall or outside the grid")
+            u = e.get("until")
+            if u is not None and (not _num(u) or u <= t):
+                err(f"{label}: 'until' must be later than t (or empty for permanent)")
+        else:
+            err(f"{label}: unknown event type (use block_cells, robot_failure or robot_recovered)")
 
 
 def robot_can_carry(robot, product):

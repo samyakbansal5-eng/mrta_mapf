@@ -3,9 +3,10 @@ import { useState } from "react";
 import RunTab, { useRunSettings } from "@/components/RunTab";
 import ImportTab from "@/components/ImportTab";
 import CompareTab from "@/components/CompareTab";
+import EditorTab from "@/components/EditorTab";
 import { useBench } from "@/lib/useBench";
 
-const TABS = [["run", "Run"], ["import", "Import"], ["compare", "Compare"], ["about", "About"]] as const;
+const TABS = [["run", "Run"], ["editor", "Plan editor"], ["import", "Import"], ["compare", "Compare"], ["about", "About"]] as const;
 
 export default function Home() {
   const [tab, setTab] = useState<(typeof TABS)[number][0]>("run");
@@ -21,6 +22,7 @@ export default function Home() {
         <span className={"chip " + bench.engineState}>{bench.engineState === "ready" ? "engine ready · " + bench.engineMsg : bench.engineState === "loading" ? "loading Python engine…" : "engine error: " + bench.engineMsg}</span>
       </header>
       {tab === "run" && <RunTab bench={bench} settings={settings} />}
+      {tab === "editor" && <EditorTab bench={bench} onUseScenario={(id) => { settings.setScenId(id); setTab("run"); }} />}
       {tab === "import" && <ImportTab bench={bench} onUseScenario={(id) => { settings.setScenId(id); setTab("run"); }} />}
       {tab === "compare" && <CompareTab bench={bench} />}
       {tab === "about" && <About />}
