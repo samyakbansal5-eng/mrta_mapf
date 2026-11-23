@@ -67,3 +67,13 @@ details.box { padding: 10px 14px; } details summary { cursor: pointer; }
 .orig { max-width: 100%; max-height: 420px; overflow: auto; background: var(--bg); padding: 8px; border-radius: 6px; border: 1px solid var(--line); white-space: pre-wrap; }
 .checks { display: flex; flex-direction: column; gap: 4px; }
 .bar { background: var(--line); border-radius: 4px; height: 10px; } .bar div { background: var(--accent); height: 100%; border-radius: 4px; }
+/* Plan editor */
+.scrollx { overflow-x: auto; margin-bottom: 8px; }
+.cellin { display: inline-flex; gap: 4px; }
+.chk { display: inline-flex; align-items: center; gap: 3px; margin-right: 8px; font-size: 12.5px; white-space: nowrap; }
+.route { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.step { display: inline-flex; align-items: center; gap: 2px; }
+.step .link { padding: 0 2px; } .link:disabled { opacity: .35; cursor: default; }
+.nowrap { white-space: nowrap; }
+.table input, .table select { font: inherit; padding: 3px 5px; border: 1px solid var(--line); border-radius: 5px; background: var(--panel); color: var(--ink); }
+.table select, .route select { width: auto; }

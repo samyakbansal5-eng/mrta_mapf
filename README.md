@@ -11,7 +11,7 @@ One app, two deliverables: the **MRTA window** (`/mrta`) and the **MAPF window**
 
 ## Status (honest)
 
-* Working and tested: engine (33 tests), 4 MRTA algorithms (greedy, auction, genetic, tabu), 3 MAPF algorithms (independent baseline, prioritized, CBS with fallback), events (blocked cells, robot failure/recovery), validators, in-browser Python (Pyodide), Run/Import/Compare tabs, module windows.
+* Working and tested: engine (41 tests), 4 MRTA algorithms (greedy, auction, genetic, tabu), 3 MAPF algorithms (independent baseline, prioritized, CBS with fallback), events (blocked cells, robot failure/recovery), validators, in-browser Python (Pyodide), Run/Plan editor/Import/Compare tabs, module windows.
 * The sample factory (`scenarios/small_factory.json`) uses **made-up** numbers. It is not from the professor.
 * The Gemini import path (`/api/convert`) is written but **not yet tested against the real API** (no key during development). Without a key it answers 501 and the deterministic importers (`.py`, `.json`, ASCII grid) still work.
 * The Sambhav prototype was never available, so the MRTA side is a fresh implementation of the same idea.
@@ -52,6 +52,20 @@ npm run dev                                                          # http://lo
 1. Vercel dashboard > Add New > Project > import this GitHub repo.
 2. **Root Directory: `web`**. Framework: Next.js (auto-detected).
 3. Add the environment variables above, then Deploy.
+
+## Editing a factory plan
+
+Open the **Plan editor** tab, pick a plan and press *Edit a copy* (samples are never changed) or *Blank plan*. You can:
+
+* add / remove / rename robots, set start cell, speed (steps per cell), payload and which products each may carry;
+* add / remove / rename / move machines (renames update every route), and give them a type label;
+* add / remove / duplicate products (job profiles) and build each route step by step with process times;
+* add events: blocked aisle (with an end time), robot failure, robot recovery;
+* toggle walls, move stations and robot starts by clicking the map, and grow or shrink the map.
+
+The same Python checks the run uses validate the plan live; errors block saving, warnings do not. Saved plans go to the browser library and appear in the Run tab. Not modelled yet: deadlines, release times, quantities, machine capacity above 1, machine types used by algorithms.
+
+Editor helper tests: `cd web && npm run test:editor`.
 
 ## Your own algorithm
 

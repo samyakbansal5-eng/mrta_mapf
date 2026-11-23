@@ -45,6 +45,9 @@ export function useBench() {
     persist({ ...library, scenarios: [...library.scenarios, { ...s, id, addedAt: Date.now() }] });
     return "lib:" + id;
   }, [library, persist]);
+  const updateScenario = useCallback((id: string, patch: Partial<Omit<LibScenario, "id">>) => {
+    persist({ ...library, scenarios: library.scenarios.map((s) => (s.id === id ? { ...s, ...patch } : s)) });
+  }, [library, persist]);
   const removeScenario = useCallback((id: string) => persist({ ...library, scenarios: library.scenarios.filter((s) => s.id !== id) }), [library, persist]);
 
   const scenarios = useMemo(() => [
@@ -77,7 +80,7 @@ export function useBench() {
     return result;
   }, [spec]);
 
-  return { catalogue, engineState, engineMsg, library, scenarios, algorithms, addAlgorithm, removeAlgorithm, addScenario, removeScenario, run, spec };
+  return { catalogue, engineState, engineMsg, library, scenarios, algorithms, addAlgorithm, removeAlgorithm, addScenario, updateScenario, removeScenario, run, spec };
 }
 
 export function defaultParams(info: any) {
