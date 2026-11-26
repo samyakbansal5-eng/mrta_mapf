@@ -13,6 +13,7 @@
     "test:editor": "node --experimental-strip-types --no-warnings --test tests/planEdit.test.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.14.0",
     "next": "^16.4.6",
     "pyodide": "^314.0.7",
     "react": "^19.3.1",

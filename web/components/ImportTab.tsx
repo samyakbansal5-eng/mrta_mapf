@@ -8,7 +8,7 @@ import { useBench } from "@/lib/useBench";
 type Bench = ReturnType<typeof useBench>;
 type Draft = {
   kind: "scenario" | "algorithm";
-  source: "file" | "gemini";
+  source: "file" | "llm";
   payload: Payload;
   notes: string[]; missing: string[]; assumed: string[];
   scenario?: any; scenarioText?: string;
@@ -44,7 +44,7 @@ export default function ImportTab({ bench, onUseScenario }: { bench: Bench; onUs
     setBusy("");
   }
 
-  /** Deterministic parsers first (no LLM); anything else goes to Gemini. */
+  /** Deterministic parsers first (no LLM); anything else goes to Claude. */
   async function route(p: Payload) {
     if (target === "algorithm" && !(p.kind === "text" && /\.py$/i.test(p.filename))) { await convert(p, "algorithm"); return; }
     if (p.kind === "text") {
@@ -53,7 +53,7 @@ export default function ImportTab({ bench, onUseScenario }: { bench: Bench; onUs
         const kind = /["']module["']\s*:\s*["']mapf["']/.test(t) || /def\s+plan\s*\(/.test(t) ? "mapf" : "mrta";
         const chk = await engine.checkPlugin(kind, t, p.filename);
         if (chk.ok) { setDraft({ kind: "algorithm", source: "file", payload: p, code: t, algoKind: kind, notes: ["Follows the plug-in contract."], missing: [], assumed: [] }); return; }
-        setMsg({ tone: "warn", text: "This Python file does not follow the contract (" + chk.error + "). You can ask Gemini to adapt it." });
+        setMsg({ tone: "warn", text: "This Python file does not follow the contract (" + chk.error + "). You can ask Claude to adapt it." });
         setDraft({ kind: "algorithm", source: "file", payload: p, code: t, algoKind: kind, notes: [], missing: [], assumed: [] });
         return;
       }
@@ -61,7 +61,7 @@ export default function ImportTab({ bench, onUseScenario }: { bench: Bench; onUs
         try {
           const j = JSON.parse(t);
           if (j.grid && j.stations) { setDraft({ kind: "scenario", source: "file", payload: p, scenario: j, scenarioText: JSON.stringify(j, null, 2), notes: ["Loaded as a factory plan."], missing: [], assumed: [] }); return; }
-        } catch { /* fall through to Gemini */ }
+        } catch { /* fall through to Claude */ }
       }
       if ((t.match(/#/g) ?? []).length > 6 && t.split("\n").filter((l) => l.trim()).length >= 3 && !/[a-z]{4,}/i.test(t.replace(/\s/g, "").slice(0, 400).replace(/[R F0-9#.]/g, ""))) {
         const parsed = await engine.parseAscii(t);
@@ -77,7 +77,7 @@ export default function ImportTab({ bench, onUseScenario }: { bench: Bench; onUs
   }
 
   async function convert(p: Payload, target: "auto" | "scenario" | "algorithm") {
-    setBusy("Asking Gemini… (this can take a while)");
+    setBusy("Asking Claude… (this can take a while)");
     try {
       const headers: any = { "content-type": "application/json" };
       if (access) headers["x-access-code"] = access;
@@ -86,8 +86,8 @@ export default function ImportTab({ bench, onUseScenario }: { bench: Bench; onUs
       const r = await fetch("/api/convert", { method: "POST", headers, body: JSON.stringify({ target, filename: p.filename, mime: p.mime, text: p.text, imageBase64: p.imageBase64, hint: fullHint || undefined }) });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || "Conversion failed.");
-      if (d.kind === "scenario") setDraft({ kind: "scenario", source: "gemini", payload: p, scenario: d.scenario, scenarioText: JSON.stringify(d.scenario, null, 2), notes: d.notes, missing: d.missing, assumed: d.assumed });
-      else if (d.kind === "algorithm") setDraft({ kind: "algorithm", source: "gemini", payload: p, code: d.code, algoKind: d.algorithm_kind, faithful: d.faithful, notes: d.notes, missing: d.missing, assumed: d.assumed });
+      if (d.kind === "scenario") setDraft({ kind: "scenario", source: "llm", payload: p, scenario: d.scenario, scenarioText: JSON.stringify(d.scenario, null, 2), notes: d.notes, missing: d.missing, assumed: d.assumed });
+      else if (d.kind === "algorithm") setDraft({ kind: "algorithm", source: "llm", payload: p, code: d.code, algoKind: d.algorithm_kind, faithful: d.faithful, notes: d.notes, missing: d.missing, assumed: d.assumed });
       else setMsg({ tone: "warn", text: (d.notes ?? []).join(" ") || "Nothing could be converted." });
     } catch (e: any) { setMsg({ tone: "bad", text: String(e.message || e) }); }
     setBusy("");
@@ -98,7 +98,7 @@ export default function ImportTab({ bench, onUseScenario }: { bench: Bench; onUs
     <div className="import">
       <div className="panel">
         <h3>Import an algorithm or a factory plan</h3>
-        <p className="hint">Drop a file: Python, JSON, a text drawing of the map, pseudocode, or a screenshot / photo. Clean formats are read directly. Everything else is converted by Gemini, and <b>you review the result before anything is saved</b>.</p>
+        <p className="hint">Drop a file: Python, JSON, a text drawing of the map, pseudocode, or a screenshot / photo. Clean formats are read directly. Everything else is converted by Claude, and <b>you review the result before anything is saved</b>.</p>
         <div className="drop" onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); onFiles(e.dataTransfer.files); }} onClick={() => input.current?.click()} role="button" tabIndex={0}
           onKeyDown={(e) => { if (e.key === "Enter") input.current?.click(); }}>
           Drop a file here or click to choose
@@ -111,7 +111,7 @@ export default function ImportTab({ bench, onUseScenario }: { bench: Bench; onUs
           ))}
           {target === "algorithm" && (
             <label>slot <select value={slot} onChange={(e) => setSlot(e.target.value as any)} aria-label="Algorithm slot">
-              <option value="either">Gemini decides</option><option value="mrta">MRTA (Sambhav)</option><option value="mapf">MAPF (Samyak)</option></select></label>
+              <option value="either">Claude decides</option><option value="mrta">MRTA (Sambhav)</option><option value="mapf">MAPF (Samyak)</option></select></label>
           )}
         </div>
         {target === "algorithm" && <div className="hint">Tip: for a research paper, a screenshot of its pseudocode (for example "Algorithm 1") usually converts more faithfully than the whole PDF. PDFs must be under 3 MB.</div>}
@@ -119,9 +119,9 @@ export default function ImportTab({ bench, onUseScenario }: { bench: Bench; onUs
           <label className="param grow"><span>Hint for the converter (optional)</span><input type="text" value={hint} placeholder="e.g. this is the factory floor, grid cell = 1 m" onChange={(e) => setHint(e.target.value)} /></label>
         </div>
         <div className="row wrap small">
-          <span className={"chip " + (gem?.configured ? "ready" : "loading")}>Gemini: {gem === null ? "unknown" : gem.configured ? "configured (" + gem.model + ")" : "not configured"}</span>
+          <span className={"chip " + (gem?.configured ? "ready" : "loading")}>Claude: {gem === null ? "unknown" : gem.configured ? "configured (" + gem.model + ")" : "not configured"}</span>
           {gem?.accessCodeRequired && <label className="param"><span>access code</span><input type="password" value={access} onChange={(e) => { setAccess(e.target.value); try { sessionStorage.setItem(ACCESS_KEY, e.target.value); } catch { /* ignore */ } }} /></label>}
-          {gem && !gem.configured && <span className="hint">Set GEMINI_API_KEY and GEMINI_MODEL on the server. Python, JSON and text maps still work without it.</span>}
+          {gem && !gem.configured && <span className="hint">Set ANTHROPIC_API_KEY on the server. Python, JSON and text maps still work without it.</span>}
         </div>
         {busy && <div className="note">{busy}</div>}
         {msg && <div className={"note " + msg.tone}>{msg.text}</div>}
@@ -193,7 +193,7 @@ function Review({ bench, draft, setDraft, convert, onDone }: { bench: Bench; dra
   }
 
   const errors = issues.filter((i) => i.level === "error");
-  const origin = draft.source === "gemini" ? (draft.kind === "algorithm" && draft.faithful === false ? "LLM-generated from description" : "converted by Gemini") : "uploaded";
+  const origin = draft.source === "llm" ? (draft.kind === "algorithm" && draft.faithful === false ? "LLM-generated from description" : "converted by Claude") : "uploaded";
   return (
     <div className="panel review">
       <h3>Review: {draft.payload.filename}</h3>
@@ -209,7 +209,7 @@ function Review({ bench, draft, setDraft, convert, onDone }: { bench: Bench; dra
           {draft.notes.map((n, i) => <div key={i} className="note">{n}</div>)}
           {draft.missing.length > 0 && <div className="note warn"><b>Missing (fill in or confirm as is):</b> {draft.missing.join(", ")}</div>}
           {draft.assumed.map((n, i) => <div key={i} className="note warn">Assumed: {n}</div>)}
-          {draft.kind === "algorithm" && draft.faithful === false && <div className="note warn">Gemini wrote this from a description; it may not match what the author meant. It will be labelled "LLM-generated" everywhere.</div>}
+          {draft.kind === "algorithm" && draft.faithful === false && <div className="note warn">Claude wrote this from a description; it may not match what the author meant. It will be labelled "LLM-generated" everywhere.</div>}
 
           {draft.kind === "scenario" ? (
             <>
@@ -221,7 +221,7 @@ function Review({ bench, draft, setDraft, convert, onDone }: { bench: Bench; dra
               <div className="row">
                 <button className="btn primary" disabled={errors.length > 0 || !sc} onClick={() => { const id = bench.addScenario({ name, json: { ...sc, name }, origin, notes: draft.assumed.join(" ") }); onDone(id); }}>Confirm and save</button>
                 <button className="btn" onClick={() => setDraft(null)}>Discard</button>
-                {draft.source === "gemini" && <button className="btn" onClick={() => convert(draft.payload, "algorithm")}>Convert again as algorithm</button>}
+                {draft.source === "llm" && <button className="btn" onClick={() => convert(draft.payload, "algorithm")}>Convert again as algorithm</button>}
               </div>
             </>
           ) : (
@@ -231,8 +231,8 @@ function Review({ bench, draft, setDraft, convert, onDone }: { bench: Bench; dra
               <textarea className="code mono" rows={16} value={draft.code} onChange={(e) => setDraft({ ...draft, code: e.target.value })} aria-label="Algorithm source" />
               <div className="row">
                 <button className="btn" disabled={busy} onClick={checkAndTry}>{busy ? "Checking…" : "Check contract + dry run"}</button>
-                {draft.source === "file" && draft.payload.text !== undefined && <button className="btn" onClick={() => convert(draft.payload, "algorithm")}>Adapt with Gemini</button>}
-                {draft.source === "gemini" && <button className="btn" onClick={() => convert(draft.payload, "scenario")}>Convert again as factory plan</button>}
+                {draft.source === "file" && draft.payload.text !== undefined && <button className="btn" onClick={() => convert(draft.payload, "algorithm")}>Adapt with Claude</button>}
+                {draft.source === "llm" && <button className="btn" onClick={() => convert(draft.payload, "scenario")}>Convert again as factory plan</button>}
               </div>
               {check && <div className={"note " + (check.ok ? "ok" : "bad")}>{check.ok ? "Contract OK: " + check.info.name : check.error}</div>}
               {dry && <div className={"note " + (dry.ok ? "ok" : "bad")}>{dry.ok ? `Dry run on the first sample plan: valid, makespan ${dry.makespan}, collisions ${dry.metrics?.collisions}.` : "Dry run failed: " + (dry.reason || (dry.issues?.[0] && dry.issues[0].type) || "invalid result")}</div>}

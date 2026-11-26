@@ -38,7 +38,7 @@ function About() {
       <h3>Two deliverables, one bench</h3>
       <p>Open the <b>MRTA window</b> or the <b>MAPF window</b> from the Run tab: each shows one module on its own, with its own algorithm picker and metrics. The Run tab shows both together.</p>
       <h3>Your own algorithms</h3>
-      <p>An algorithm is one Python file with an <code>INFO</code> dict and one function (see <code>plugins-examples/</code>). Upload it in the Import tab, then pick it in the dropdowns. Uploaded code runs only inside a background Web Worker in your browser, with the page's network access blocked, and can be stopped at any time. Files that are not in the right shape (pseudocode, a screenshot, a different function signature) can be converted by Gemini; you review the result first.</p>
+      <p>An algorithm is one Python file with an <code>INFO</code> dict and one function (see <code>plugins-examples/</code>). Upload it in the Import tab, then pick it in the dropdowns. Uploaded code runs only inside a background Web Worker in your browser, with the page's network access blocked, and can be stopped at any time. Files that are not in the right shape (pseudocode, a screenshot, a different function signature) can be converted by Claude; you review the result first.</p>
       <h3>Model assumptions (to confirm with the professor)</h3>
       <ul className="list">
         <li>Time moves in whole steps; a robot with step cost k needs k steps per cell.</li>
