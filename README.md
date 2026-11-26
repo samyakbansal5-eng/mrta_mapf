@@ -13,7 +13,7 @@ One app, two deliverables: the **MRTA window** (`/mrta`) and the **MAPF window**
 
 * Working and tested: engine (114 tests), 14 MRTA algorithms and 11 MAPF algorithms (see the table below), every one documented with how it works, its supporting papers and how close it is to the paper (shown under each algorithm in the Run window), events (blocked cells, robot failure/recovery), validators, in-browser Python (Pyodide), Run/Plan editor/Import/Compare tabs, module windows.
 * The sample factory (`scenarios/small_factory.json`) uses **made-up** numbers. It is not from the professor.
-* The Gemini import path (`/api/convert`) is written but **not yet tested against the real API** (no key during development). Without a key it answers 501 and the deterministic importers (`.py`, `.json`, ASCII grid) still work.
+* The AI import path (`/api/convert`) uses Claude (Haiku, lowest effort, thinking off) and is **not yet tested against the real API** (no key during development). Without a key it answers 501 and the deterministic importers (`.py`, `.json`, ASCII grid) still work.
 * The Sambhav prototype was never available, so the MRTA side is a fresh implementation of the same idea.
 * Not decided yet: official metrics, the meaning of "Direct/Indirect" in the notes, final deliverable wording.
 
@@ -56,7 +56,7 @@ python/bench/mapf      lowlevel (space-time A*), stepwise (PIBT core), independe
 python/tests           pytest suite
 scenarios/             sample factory + events
 plugins-examples/      templates to copy for your own MRTA / MAPF algorithm
-web/                   Next.js app (UI, Gemini route, Pyodide worker)
+web/                   Next.js app (UI, Claude convert route, Pyodide worker)
 ```
 
 ## Run locally
@@ -73,18 +73,19 @@ npm run dev                                                          # http://lo
 
 | name | purpose |
 |---|---|
-| `GEMINI_API_KEY` | your Gemini key (server only) |
-| `GEMINI_MODEL` | model id you want to use, e.g. the one shown in Google AI Studio |
+| `ANTHROPIC_API_KEY` | your Claude API key (server only) |
+| `ANTHROPIC_MODEL` | optional; defaults to `claude-haiku-5-5` |
+| `ANTHROPIC_EFFORT` | optional; `low` (default), `medium` or `high` |
 | `APP_ACCESS_CODE` | optional; if set, converting uploads needs this code |
 
-## Making Gemini work
+## Making the AI import work (Claude)
 
-1. Get a key: Google AI Studio (aistudio.google.com) > Get API key. The free tier is enough for a few conversions a day.
-2. Pick a model id from the AI Studio model list (a current "Flash" model is fast and cheap; a "Pro" model reads long PDFs better).
-3. Locally: put `GEMINI_API_KEY=...` and `GEMINI_MODEL=...` in `web/.env.local`, restart `npm run dev`. On Vercel: Project > Settings > Environment Variables, then Redeploy.
-4. Check: the Import tab chip turns to "Gemini: configured (model)". Choose "Treat my upload as: Algorithm", optionally the slot, and drop the file.
+1. Get a key: platform.claude.com > sign in > Billing (add a small amount of credit, e.g. $5) > API keys > Create key.
+2. Locally: put `ANTHROPIC_API_KEY=...` in `web/.env.local`, restart `npm run dev`. On Vercel: Project > Settings > Environment Variables, then Redeploy.
+3. The default model is Claude Haiku 5.5 with effort `low` and thinking off, the cheapest setting (about $0.10 per million input tokens and $0.50 per million output tokens). A typical paper conversion costs well under one US cent.
+4. Check: the Import tab chip turns to "Claude: configured (claude-haiku-5-5)". Choose "Treat my upload as: Algorithm", optionally the slot, and drop the file.
 
-Limits: PDF under 3 MB, Gemini must answer within 60 s (`maxDuration` in `web/app/api/convert/route.ts`).
+Limits: PDF under 3 MB, Claude must answer within 60 s (`maxDuration` in `web/app/api/convert/route.ts`).
 
 ## Deploy on Vercel
 

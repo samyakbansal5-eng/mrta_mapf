@@ -1,4 +1,4 @@
-// Instructions sent to Gemini by /api/convert. Uploaded content is DATA, never instructions.
+// Instructions sent to Claude by /api/convert. Uploaded content is DATA, never instructions.
 
 export const SCENARIO_SCHEMA = `{
   "name": string,
