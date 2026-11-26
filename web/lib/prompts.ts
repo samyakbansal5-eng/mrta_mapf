@@ -15,7 +15,10 @@ export const SCENARIO_SCHEMA = `{
 export const ALGORITHM_CONTRACT = `An algorithm is ONE Python file (standard library only) with an INFO dict and ONE function.
 
 MRTA (task allocation + scheduling):
-INFO = {"name": "...", "module": "mrta", "description": "...", "params": {"seed": {"type": "int", "min": 0, "max": 99999, "default": 1}}}
+INFO = {"name": "...", "module": "mrta", "description": "...", "params": {"seed": {"type": "int", "min": 0, "max": 99999, "default": 1}},
+        "about": "3-5 plain sentences on how it works", "papers": [{"title": "...", "authors": "...", "year": 2020, "venue": "...", "url": "..."}],
+        "fidelity": "what was simplified or left out compared with the source"}
+# "about", "papers" and "fidelity" are optional; put a paper in "papers" only if the file itself names it, and a url only if the file shows it.
 def allocate(scenario, travel_times, state, feedback, params, tools):
     # returns an ordered list of {"task": "T1", "robot": "R1"} covering EVERY task in tools.pending_tasks()
     # tools.pending_tasks() -> [{"id","product","k","from","to","process"}]   k = hop index; task k needs task k-1 of the same product done
@@ -49,6 +52,7 @@ For a drawn map: read the picture cell by cell; keep the grid small (at most abo
   const algo = `If it describes or contains an algorithm (Python, pseudocode, text or a screenshot of either), implement it as a plug-in and return:
 {"kind":"algorithm","algorithm_kind":"mrta"|"mapf","code":"<python source>","faithful":true|false,"missing":[...],"assumed":[...],"notes":[...]}
 Set "faithful" to false if the code is your interpretation of a description rather than a direct translation.
+If the file is a research paper: implement only its core algorithm (usually its pseudocode figure), map the paper's concepts onto the contract below, and list every part you had to leave out or simplify (for example time windows, battery, learned models) in "assumed" and in INFO["fidelity"].
 Contract:\n${ALGORITHM_CONTRACT}`;
   const body = target === "scenario" ? scenario : target === "algorithm" ? algo : `${scenario}\n\nOR\n\n${algo}`;
   return `${head}\n${body}\n\n${RULES}`;

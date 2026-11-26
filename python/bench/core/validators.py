@@ -51,7 +51,7 @@ def validate_paths(sc, paths, blocked_intervals=(), failed=None):
             if d > 1:
                 issues.append({"type": "jump", "robots": [rid], "t": t})
             if d == 1:
-                if last_move is not None and i - last_move < step[rid]:
+                if last_move is not None and i - last_move < step.get(rid.split("#")[0], 1):
                     issues.append({"type": "too_fast", "robots": [rid], "t": t})
                 last_move = i
         for b in blocked_intervals:

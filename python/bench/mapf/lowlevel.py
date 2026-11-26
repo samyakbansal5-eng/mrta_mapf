@@ -22,7 +22,7 @@ def _with_start(h, start, grid, blocked):
     return True
 
 
-def st_astar(problem, start, t_start, goal, release, k, vcons, econs, hcache, check_time=None):
+def st_astar(problem, start, t_start, goal, release, k, vcons, econs, hcache, check_time=None, anchor=None, phase0=0):
     """Cheapest-arrival path in (cell, time) for one leg: start -> goal.
 
     * A robot with step_cost k needs k time steps per cell: it waits k-1 steps on the cell it
@@ -31,30 +31,37 @@ def st_astar(problem, start, t_start, goal, release, k, vcons, econs, hcache, ch
       robot may move around (e.g. step aside to let others pass) but must be back on the
       start cell at time >= release before it heads for the goal.
     vcons: forbidden (cell, t); econs: forbidden (from, to, t_arrival).
+    anchor / phase0 (optional, used by windowed replanning): the pickup cell when the robot is not
+    standing on it right now, and 1 if the product has already been picked up.
     Returns [(x, y, t), ...] from t_start through arrival, or None.
     """
     grid = problem["grid"]
     blocked = problem["blocked_set"]
     exempt = problem["exempt_set"]
     start, goal = tuple(start), tuple(goal)
-    if start == goal:
+    anchor = start if anchor is None else tuple(anchor)
+    if start == goal and (anchor == start or phase0 == 1):
         return [(start[0], start[1], t_start)]
     hg = hmap_for(problem, goal, hcache)
     if not _with_start(hg, start, grid, blocked):
         return None
-    hf = hmap_for(problem, start, hcache)
+    if anchor not in hg and not _with_start(hg, anchor, grid, blocked):
+        return None
+    hf = hmap_for(problem, anchor, hcache)
+    if start not in hf and not _with_start(hf, start, grid, blocked):
+        return None
     t_max = t_start + problem["horizon"]
-    dgo = hg[start]
+    dgo = hg[anchor]
 
     def phase(c, t, ph):
-        return 1 if ph == 1 or (c == start and t >= release) else 0
+        return 1 if ph == 1 or (c == anchor and t >= release) else 0
 
     def heur(c, t, ph):
         if ph == 1:
             return hg[c] * k
         return max(hf.get(c, 0) * k + dgo * k, (release - t) + dgo * k)
 
-    ph0 = phase(start, t_start, 0)
+    ph0 = phase(start, t_start, phase0)
     s0 = (start, t_start, ph0)
     parent = {s0: None}
     open_ = [(heur(*s0), 0, s0)]

@@ -29,6 +29,17 @@ for (const [sc, mrta, mapf] of [["small_factory", "greedy", "prioritized"], ["sm
   check(`${sc} ${mrta}+${mapf}`, r.ok === expectOk && (expectOk ? r.metrics.collisions === 0 : r.metrics.collisions > 0),
         `ok=${r.ok} makespan=${r.makespan} collisions=${r.metrics?.collisions} ${Date.now() - t} ms`);
 }
+// algorithms added from the literature shortlist, on the busier sample factory
+for (const mapf of ["pibt", "lacam", "lns2", "eecbs", "pbs", "rhcr", "traffic_flow", "adg"]) {
+  const t = Date.now();
+  const r = JSON.parse(api.run_json(JSON.stringify({ scenario: scen("busy_factory"), mrta: { name: "greedy" }, mapf: { name: mapf }, options: { time_limit_s: 120 } })));
+  check(`busy_factory greedy+${mapf}`, r.ok && r.metrics.collisions === 0, `makespan=${r.makespan} ${Date.now() - t} ms ${r.reason ?? ""}`);
+}
+for (const mrta of ["rmca", "tessi", "bischoff", "hmr_odta", "kalempa", "calvo", "ta_hybrid", "tercio", "meng_ga", "sun_ga"]) {
+  const t = Date.now();
+  const r = JSON.parse(api.run_json(JSON.stringify({ scenario: scen("busy_factory"), mrta: { name: mrta }, mapf: { name: "pbs" }, options: { time_limit_s: 120 } })));
+  check(`busy_factory ${mrta}+pbs`, r.ok && r.metrics.collisions === 0, `makespan=${r.makespan} ${Date.now() - t} ms ${r.reason ?? ""}`);
+}
 const cat = JSON.parse(api.catalogue_json());
-check("catalogue", cat.mrta.length === 4 && cat.mapf.length === 3);
+check("catalogue", cat.mrta.length === 14 && cat.mapf.length === 11 && [...cat.mrta, ...cat.mapf].every((i) => i.papers?.length && i.about));
 process.exit(failed ? 1 : 0);

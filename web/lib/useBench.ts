@@ -57,7 +57,7 @@ export function useBench() {
 
   const algorithms = useCallback((kind: "mrta" | "mapf") => [
     ...((catalogue?.[kind] ?? []).map((i: any) => ({ sel: "builtin:" + i.id, info: i, origin: "built-in" }))),
-    ...library.algorithms.filter((a) => a.kind === kind).map((a) => ({ sel: "lib:" + a.id, info: { name: a.name, description: a.notes ?? "", params: a.paramsSpec ?? {} }, origin: a.origin })),
+    ...library.algorithms.filter((a) => a.kind === kind).map((a) => ({ sel: "lib:" + a.id, info: { name: a.name, description: a.notes ?? "", params: a.paramsSpec ?? {}, about: a.about, papers: a.papers, fidelity: a.fidelity }, origin: a.origin })),
   ], [catalogue, library]);
 
   /** Build the {name|source, params} spec the Python side wants. */

@@ -24,6 +24,8 @@ export default function ImportTab({ bench, onUseScenario }: { bench: Bench; onUs
   const [gem, setGem] = useState<{ configured: boolean; model: string | null; accessCodeRequired: boolean } | null>(null);
   const [access, setAccess] = useState("");
   const [hint, setHint] = useState("");
+  const [target, setTarget] = useState<"auto" | "algorithm" | "scenario">("auto");
+  const [slot, setSlot] = useState<"either" | "mrta" | "mapf">("either");
   const input = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -44,9 +46,10 @@ export default function ImportTab({ bench, onUseScenario }: { bench: Bench; onUs
 
   /** Deterministic parsers first (no LLM); anything else goes to Gemini. */
   async function route(p: Payload) {
+    if (target === "algorithm" && !(p.kind === "text" && /\.py$/i.test(p.filename))) { await convert(p, "algorithm"); return; }
     if (p.kind === "text") {
       const t = p.text!;
-      if (/\.py$/i.test(p.filename)) {
+      if (/\.py$/i.test(p.filename) && target !== "scenario") {
         const kind = /["']module["']\s*:\s*["']mapf["']/.test(t) || /def\s+plan\s*\(/.test(t) ? "mapf" : "mrta";
         const chk = await engine.checkPlugin(kind, t, p.filename);
         if (chk.ok) { setDraft({ kind: "algorithm", source: "file", payload: p, code: t, algoKind: kind, notes: ["Follows the plug-in contract."], missing: [], assumed: [] }); return; }
@@ -70,7 +73,7 @@ export default function ImportTab({ bench, onUseScenario }: { bench: Bench; onUs
         return;
       }
     }
-    await convert(p, "auto");
+    await convert(p, target);
   }
 
   async function convert(p: Payload, target: "auto" | "scenario" | "algorithm") {
@@ -78,7 +81,9 @@ export default function ImportTab({ bench, onUseScenario }: { bench: Bench; onUs
     try {
       const headers: any = { "content-type": "application/json" };
       if (access) headers["x-access-code"] = access;
-      const r = await fetch("/api/convert", { method: "POST", headers, body: JSON.stringify({ target, filename: p.filename, mime: p.mime, text: p.text, imageBase64: p.imageBase64, hint }) });
+      const slotHint = target === "algorithm" && slot !== "either" ? `This is a ${slot.toUpperCase()} algorithm: implement it as ${slot === "mapf" ? "plan()" : "allocate()"}.` : "";
+      const fullHint = [slotHint, hint].filter(Boolean).join(" ");
+      const r = await fetch("/api/convert", { method: "POST", headers, body: JSON.stringify({ target, filename: p.filename, mime: p.mime, text: p.text, imageBase64: p.imageBase64, hint: fullHint || undefined }) });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || "Conversion failed.");
       if (d.kind === "scenario") setDraft({ kind: "scenario", source: "gemini", payload: p, scenario: d.scenario, scenarioText: JSON.stringify(d.scenario, null, 2), notes: d.notes, missing: d.missing, assumed: d.assumed });
@@ -99,6 +104,17 @@ export default function ImportTab({ bench, onUseScenario }: { bench: Bench; onUs
           Drop a file here or click to choose
           <input ref={input} type="file" hidden onChange={(e) => onFiles(e.target.files)} aria-label="Upload file" />
         </div>
+        <div className="target-pick" role="radiogroup" aria-label="Treat the upload as">
+          <span className="muted">Treat my upload as:</span>
+          {([["auto", "Let the app decide"], ["algorithm", "Algorithm (paper PDF, pseudocode, screenshot, code)"], ["scenario", "Factory plan"]] as const).map(([v, l]) => (
+            <label key={v}><input type="radio" name="target" checked={target === v} onChange={() => setTarget(v)} /> {l}</label>
+          ))}
+          {target === "algorithm" && (
+            <label>slot <select value={slot} onChange={(e) => setSlot(e.target.value as any)} aria-label="Algorithm slot">
+              <option value="either">Gemini decides</option><option value="mrta">MRTA (Sambhav)</option><option value="mapf">MAPF (Samyak)</option></select></label>
+          )}
+        </div>
+        {target === "algorithm" && <div className="hint">Tip: for a research paper, a screenshot of its pseudocode (for example "Algorithm 1") usually converts more faithfully than the whole PDF. PDFs must be under 3 MB.</div>}
         <div className="row wrap">
           <label className="param grow"><span>Hint for the converter (optional)</span><input type="text" value={hint} placeholder="e.g. this is the factory floor, grid cell = 1 m" onChange={(e) => setHint(e.target.value)} /></label>
         </div>
@@ -205,6 +221,7 @@ function Review({ bench, draft, setDraft, convert, onDone }: { bench: Bench; dra
               <div className="row">
                 <button className="btn primary" disabled={errors.length > 0 || !sc} onClick={() => { const id = bench.addScenario({ name, json: { ...sc, name }, origin, notes: draft.assumed.join(" ") }); onDone(id); }}>Confirm and save</button>
                 <button className="btn" onClick={() => setDraft(null)}>Discard</button>
+                {draft.source === "gemini" && <button className="btn" onClick={() => convert(draft.payload, "algorithm")}>Convert again as algorithm</button>}
               </div>
             </>
           ) : (
@@ -215,12 +232,13 @@ function Review({ bench, draft, setDraft, convert, onDone }: { bench: Bench; dra
               <div className="row">
                 <button className="btn" disabled={busy} onClick={checkAndTry}>{busy ? "Checking…" : "Check contract + dry run"}</button>
                 {draft.source === "file" && draft.payload.text !== undefined && <button className="btn" onClick={() => convert(draft.payload, "algorithm")}>Adapt with Gemini</button>}
+                {draft.source === "gemini" && <button className="btn" onClick={() => convert(draft.payload, "scenario")}>Convert again as factory plan</button>}
               </div>
               {check && <div className={"note " + (check.ok ? "ok" : "bad")}>{check.ok ? "Contract OK: " + check.info.name : check.error}</div>}
               {dry && <div className={"note " + (dry.ok ? "ok" : "bad")}>{dry.ok ? `Dry run on the first sample plan: valid, makespan ${dry.makespan}, collisions ${dry.metrics?.collisions}.` : "Dry run failed: " + (dry.reason || (dry.issues?.[0] && dry.issues[0].type) || "invalid result")}</div>}
               <div className="note warn">This code runs only inside a background worker in your browser, with no network access. Still, read it before you confirm.</div>
               <div className="row">
-                <button className="btn primary" disabled={!check?.ok || !dry} onClick={() => { bench.addAlgorithm({ kind: draft.algoKind!, name: check.info.name, label: draft.payload.filename, source: draft.code!, origin, notes: check.info.description, paramsSpec: check.info.params }); onDone(); }}>Confirm and save</button>
+                <button className="btn primary" disabled={!check?.ok || !dry} onClick={() => { bench.addAlgorithm({ kind: draft.algoKind!, name: check.info.name, label: draft.payload.filename, source: draft.code!, origin, notes: check.info.description, paramsSpec: check.info.params, about: check.info.about, papers: Array.isArray(check.info.papers) ? check.info.papers : undefined, fidelity: check.info.fidelity }); onDone(); }}>Confirm and save</button>
                 <button className="btn" onClick={() => setDraft(null)}>Discard</button>
               </div>
               {check?.ok && dry && !dry.ok && <div className="hint">You can still save an algorithm whose dry run was invalid: the bench will mark its results as invalid.</div>}

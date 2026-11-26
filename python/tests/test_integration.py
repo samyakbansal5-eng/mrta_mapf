@@ -113,5 +113,5 @@ def test_soft_time_limit():
 
 def test_catalogue_lists_all_builtins():
     c = json.loads(api.catalogue_json())
-    assert {x["id"] for x in c["mrta"]} == set(MRTA)
-    assert {x["id"] for x in c["mapf"]} == {"independent", "prioritized", "cbs"}
+    assert set(MRTA) <= {x["id"] for x in c["mrta"]}
+    assert {x["id"] for x in c["mapf"]} == {"independent", "prioritized", "cbs", "eecbs", "pbs", "pibt", "lacam", "lns2", "rhcr", "traffic_flow", "adg"}

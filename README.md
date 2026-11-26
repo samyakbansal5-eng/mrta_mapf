@@ -11,18 +11,48 @@ One app, two deliverables: the **MRTA window** (`/mrta`) and the **MAPF window**
 
 ## Status (honest)
 
-* Working and tested: engine (41 tests), 4 MRTA algorithms (greedy, auction, genetic, tabu), 3 MAPF algorithms (independent baseline, prioritized, CBS with fallback), events (blocked cells, robot failure/recovery), validators, in-browser Python (Pyodide), Run/Plan editor/Import/Compare tabs, module windows.
+* Working and tested: engine (114 tests), 14 MRTA algorithms and 11 MAPF algorithms (see the table below), every one documented with how it works, its supporting papers and how close it is to the paper (shown under each algorithm in the Run window), events (blocked cells, robot failure/recovery), validators, in-browser Python (Pyodide), Run/Plan editor/Import/Compare tabs, module windows.
 * The sample factory (`scenarios/small_factory.json`) uses **made-up** numbers. It is not from the professor.
 * The Gemini import path (`/api/convert`) is written but **not yet tested against the real API** (no key during development). Without a key it answers 501 and the deterministic importers (`.py`, `.json`, ASCII grid) still work.
 * The Sambhav prototype was never available, so the MRTA side is a fresh implementation of the same idea.
 * Not decided yet: official metrics, the meaning of "Direct/Indirect" in the notes, final deliverable wording.
 
+## Algorithms and their papers
+
+Built in from the start: MRTA greedy, auction, genetic, tabu; MAPF independent A*, prioritized, CBS.
+Added from the literature shortlist (Nov 2026). "Inspired" means the core idea is kept but parts the scenario format cannot express yet (deadlines, battery, coalitions, alternative machines) are simplified; each algorithm's `fidelity` text says exactly what.
+
+| Module | Plug-in | Paper | Closeness |
+|---|---|---|---|
+| MAPF | `pibt` | Okumura et al., PIBT (IJCAI 2019 / AIJ 2022) | faithful |
+| MAPF | `lacam` | Okumura, LaCAM (AAAI 2023) | core loop |
+| MAPF | `lns2` | Li et al., MAPF-LNS2 (AAAI 2022) | simplified low level |
+| MAPF | `eecbs` | Li, Ruml, Koenig, EECBS (AAAI 2021) | focal search only |
+| MAPF | `pbs` | Ma et al., PBS (AAAI 2019) | faithful |
+| MAPF | `rhcr` | Li et al., RHCR (AAAI 2021) | windowed prioritized |
+| MAPF | `traffic_flow` | Chen et al., Traffic Flow Optimisation (AAAI 2024) | simplified |
+| MAPF | `adg` | Hönig et al., Action Dependency Graph (RA-L 2019) | execution rule |
+| MRTA | `rmca` | Chen et al., RMCA (RA-L 2021) | faithful insertion + LNS |
+| MRTA | `tessi` | Nunes & Gini, TeSSI (AAAI 2015) | faithful bids |
+| MRTA | `bischoff` | Bischoff et al. (SMC 2020) | no cooperative tasks |
+| MRTA | `hmr_odta` | Verma et al., HMR-ODTA (arXiv 2025) | inspired |
+| MRTA | `kalempa` | Kalempa et al., MRPF (Sensors 2021) | inspired |
+| MRTA | `calvo` | Calvo & Capitán (T-RO 2025) | inspired |
+| MRTA | `ta_hybrid` | Liu et al., TA-Hybrid (AAMAS 2019) | simplified TSP |
+| MRTA | `tercio` | Gombolay et al., Tercio (T-RO 2018) | inspired |
+| MRTA | `meng_ga` | Meng et al. (Sensors 2023) | faithful minus machine choice |
+| MRTA | `sun_ga` | Sun et al. (Sensors 2023) | inspired |
+
+Not implemented (read for related work): CCBS continuous-time MAPF and windowed MAPF with completeness guarantees (too large for now), and learning-based schedulers (need trained networks).
+
+A third sample, `scenarios/busy_factory.json` (6 robots, 6 products, a blocked aisle), shows the differences between the planners better than the small sample.
+
 ## Layout
 
 ```
 python/bench/core      grid, scenario, tasks, schedule, validators, orchestrator, plug-in loader
-python/bench/mrta      greedy, auction, genetic, tabu
-python/bench/mapf      lowlevel (space-time A*), independent, prioritized, cbs
+python/bench/mrta      greedy, auction, genetic, tabu + 10 from papers (_seq.py = shared sequence helpers)
+python/bench/mapf      lowlevel (space-time A*), stepwise (PIBT core), independent, prioritized, cbs + 8 from papers
 python/tests           pytest suite
 scenarios/             sample factory + events
 plugins-examples/      templates to copy for your own MRTA / MAPF algorithm
@@ -46,6 +76,15 @@ npm run dev                                                          # http://lo
 | `GEMINI_API_KEY` | your Gemini key (server only) |
 | `GEMINI_MODEL` | model id you want to use, e.g. the one shown in Google AI Studio |
 | `APP_ACCESS_CODE` | optional; if set, converting uploads needs this code |
+
+## Making Gemini work
+
+1. Get a key: Google AI Studio (aistudio.google.com) > Get API key. The free tier is enough for a few conversions a day.
+2. Pick a model id from the AI Studio model list (a current "Flash" model is fast and cheap; a "Pro" model reads long PDFs better).
+3. Locally: put `GEMINI_API_KEY=...` and `GEMINI_MODEL=...` in `web/.env.local`, restart `npm run dev`. On Vercel: Project > Settings > Environment Variables, then Redeploy.
+4. Check: the Import tab chip turns to "Gemini: configured (model)". Choose "Treat my upload as: Algorithm", optionally the slot, and drop the file.
+
+Limits: PDF under 3 MB, Gemini must answer within 60 s (`maxDuration` in `web/app/api/convert/route.ts`).
 
 ## Deploy on Vercel
 
