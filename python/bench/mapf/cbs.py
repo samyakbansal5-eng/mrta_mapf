@@ -2,6 +2,11 @@ INFO = {
     "name": "Conflict-Based Search (CBS)",
     "module": "mapf",
     "description": "Plans every robot alone, finds the first collision, then branches: forbid the cell/time for one robot or the other. Finds minimum-total-time plans.",
+    "about": 'Conflict-Based Search plans every robot alone, then looks for the first collision. It branches into two children: in one, robot A may not be at that cell at that time; in the other, robot B may not. Each child re-plans only the constrained robot. Always expanding the cheapest node gives a plan with the minimum total time. Optimal but can be slow when many robots share aisles; here it falls back to prioritized planning after a node limit.',
+    "papers": [
+        {"title": 'Conflict-Based Search for Optimal Multi-Agent Pathfinding', "authors": 'G. Sharon, R. Stern, A. Felner, N. R. Sturtevant', "year": 2015, "venue": 'Artificial Intelligence 219', "url": 'https://people.engr.tamu.edu/guni/pistar/Papers/CBS-AIJ15.pdf'},
+    ],
+    "fidelity": 'Basic CBS (no bypassing, no cardinal-conflict prioritising); node limit and fallback are our additions.',
     "params": {
         "max_nodes": {"type": "int", "min": 10, "max": 20000, "default": 1500},
         "fallback": {"type": "choice", "options": ["yes", "no"], "default": "yes"},

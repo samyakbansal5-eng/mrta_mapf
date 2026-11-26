@@ -2,6 +2,11 @@ INFO = {
     "name": "Genetic algorithm",
     "module": "mrta",
     "description": "Evolves a priority order of tasks plus a robot for each task, minimising makespan.",
+    "about": 'A genetic algorithm keeps a population of candidate plans. Each candidate is a priority order of all tasks plus a robot for every task. Candidates are scored by the makespan of the schedule they produce; the best ones are kept, combined (crossover) and randomly changed (mutation) for a number of generations. The greedy plan is included in the first population, so the result is never worse than greedy.',
+    "papers": [
+        {"title": 'Genetic Algorithms for Shop Scheduling Problems: A Survey', "authors": 'F. Werner', "year": 2011, "venue": 'Preprint, Otto-von-Guericke-Universität Magdeburg', "url": 'https://wasd.urz.uni-magdeburg.de/werner/preprints/p11-31.pdf'},
+    ],
+    "fidelity": 'A general GA in the style of the machine-and-AGV scheduling literature; not a reproduction of one specific paper.',
     "params": {
         "population": {"type": "int", "min": 6, "max": 200, "default": 30},
         "generations": {"type": "int", "min": 1, "max": 500, "default": 40},

@@ -2,6 +2,12 @@ INFO = {
     "name": "Auction (sequential single-item)",
     "module": "mrta",
     "description": "Market-based: each round every robot bids its own route cost for every open task; the cheapest bid wins.",
+    "about": 'A market-based method. In each round every robot computes a bid for every open task: the time at which it would finish that task if it were added to the end of its queue. The single cheapest bid over all tasks and robots wins, the winner adds the task, and the next round starts. Sequential single-item auctions are simple, can run decentralised, and have proven quality bounds for some objectives.',
+    "papers": [
+        {"title": 'The Power of Sequential Single-Item Auctions for Agent Coordination', "authors": 'S. Koenig et al.', "year": 2006, "venue": 'AAAI 2006', "url": 'https://cdn.aaai.org/AAAI/2006/AAAI06-266.pdf'},
+        {"title": 'Market-Based Multirobot Coordination: A Survey and Analysis', "authors": 'M. B. Dias, R. Zlot, N. Kalra, A. Stentz', "year": 2006, "venue": 'Proceedings of the IEEE 94(7)', "url": 'https://publications.ri.cmu.edu/storage/publications/pub_files/2006/7/01677943-1.pdf'},
+    ],
+    "fidelity": "Standard sequential single-item auction with finish-time bids; tasks are appended to the end of a robot's queue (see TeSSI for insertion bids).",
     "params": {},
 }
 

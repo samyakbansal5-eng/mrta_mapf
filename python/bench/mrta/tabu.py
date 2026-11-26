@@ -2,6 +2,11 @@ INFO = {
     "name": "Tabu search",
     "module": "mrta",
     "description": "Starts from the greedy plan and repeatedly tries moving a task to another robot or swapping two tasks in the order, avoiding recently tried moves.",
+    "about": "Tabu search starts from the greedy plan and repeatedly applies the best small change: move one task to another robot, or swap two neighbouring tasks in the order. Recently used moves are 'tabu' for a few iterations so the search does not cycle back, unless a tabu move would beat the best plan found so far.",
+    "papers": [
+        {"title": 'Tabu Search Algorithms for Job-Shop Problems with a Single Transport Robot', "authors": 'J. Hurink, S. Knust', "year": 2005, "venue": 'European Journal of Operational Research 162(1)', "url": 'https://research.utwente.nl/files/5112851/1579.pdf'},
+    ],
+    "fidelity": 'A general tabu search with reassign and swap moves; the paper is a representative use of tabu search for transport-robot scheduling.',
     "params": {
         "iterations": {"type": "int", "min": 1, "max": 1000, "default": 80},
         "tenure": {"type": "int", "min": 1, "max": 50, "default": 7},

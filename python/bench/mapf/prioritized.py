@@ -2,6 +2,12 @@ INFO = {
     "name": "Prioritized planning",
     "module": "mapf",
     "description": "Robots plan one after another; each avoids the (cell, time) slots already reserved by earlier robots.",
+    "about": 'Robots are planned one after another in a priority order. Each robot uses space-time A* and avoids the (cell, time) slots already reserved by the robots planned before it (a reservation table). If some robot cannot find a route, other random orders are tried. Fast and usually good, but a fixed order can make a solvable problem look unsolvable.',
+    "papers": [
+        {"title": 'On Multiple Moving Objects', "authors": 'M. Erdmann, T. Lozano-Pérez', "year": 1987, "venue": 'Algorithmica 2', "url": 'https://lis.csail.mit.edu/pubs/tlp/multiple-moving.pdf'},
+        {"title": 'Cooperative Pathfinding', "authors": 'D. Silver', "year": 2005, "venue": 'AIIDE 2005', "url": 'https://ojs.aaai.org/index.php/AIIDE/article/view/18726'},
+    ],
+    "fidelity": 'Cooperative A* with a reservation table and random restarts.',
     "params": {
         "order": {"type": "choice", "options": ["by_release", "longest_first"], "default": "by_release"},
         "restarts": {"type": "int", "min": 0, "max": 50, "default": 8},

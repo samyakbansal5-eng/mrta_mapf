@@ -1,5 +1,5 @@
 // Per-browser library of uploaded algorithms and factory plans (localStorage; may be unavailable).
-export type LibAlgo = { id: string; kind: "mrta" | "mapf"; name: string; label: string; source: string; origin: string; addedAt: number; notes?: string; paramsSpec?: any };
+export type LibAlgo = { id: string; kind: "mrta" | "mapf"; name: string; label: string; source: string; origin: string; addedAt: number; notes?: string; paramsSpec?: any; about?: string; papers?: any[]; fidelity?: string };
 export type LibScenario = { id: string; name: string; json: any; origin: string; addedAt: number; notes?: string };
 export type Library = { algorithms: LibAlgo[]; scenarios: LibScenario[] };
 

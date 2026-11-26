@@ -77,3 +77,12 @@ details.box { padding: 10px 14px; } details summary { cursor: pointer; }
 .nowrap { white-space: nowrap; }
 .table input, .table select { font: inherit; padding: 3px 5px; border: 1px solid var(--line); border-radius: 5px; background: var(--panel); color: var(--ink); }
 .table select, .route select { width: auto; }
+
+details.about { margin: 6px 0; font-size: 12.5px; border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; background: var(--panel); }
+details.about summary { color: var(--muted); font-size: 12px; }
+details.about p { margin: 6px 0; line-height: 1.45; }
+details.about .about-h { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin-top: 8px; }
+ul.papers { margin: 4px 0; padding-left: 18px; }
+ul.papers li { margin: 3px 0; line-height: 1.35; }
+.target-pick { display: flex; gap: 12px; flex-wrap: wrap; font-size: 13px; margin: 6px 0; }
+.target-pick label { display: inline-flex; gap: 4px; align-items: center; margin: 0; color: inherit; font-size: 13px; }

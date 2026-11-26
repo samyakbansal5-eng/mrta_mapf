@@ -9,8 +9,8 @@ import types
 
 FUNCS = {"mapf": "plan", "mrta": "allocate"}
 BUILTIN = {
-    "mrta": ["greedy", "auction", "genetic", "tabu"],
-    "mapf": ["independent", "prioritized", "cbs"],
+    "mrta": ["greedy", "auction", "genetic", "tabu", "rmca", "tessi", "bischoff", "hmr_odta", "kalempa", "calvo", "ta_hybrid", "tercio", "meng_ga", "sun_ga"],
+    "mapf": ["independent", "prioritized", "cbs", "eecbs", "pbs", "pibt", "lacam", "lns2", "rhcr", "traffic_flow", "adg"],
 }
 CUSTOM = {"mrta": {}, "mapf": {}}
 

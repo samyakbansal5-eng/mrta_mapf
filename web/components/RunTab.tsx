@@ -21,8 +21,37 @@ export function AlgoSelect({ bench, kind, sel, setSel, params, setParams, label 
         {list.map((a) => <option key={a.sel} value={a.sel}>{a.info.name}{a.origin !== "built-in" ? ` (${a.origin})` : ""}</option>)}
       </select>
       {cur?.info.description && <div className="hint">{cur.info.description}</div>}
+      <AlgoAbout info={cur?.info} origin={cur?.origin} />
       <Params info={cur?.info} values={params} onChange={setParams} />
     </div>
+  );
+}
+
+/** "How it works" + supporting papers for one algorithm (from its INFO dict). */
+export function AlgoAbout({ info, origin }: { info: any; origin?: string }) {
+  if (!info) return null;
+  const papers: any[] = Array.isArray(info.papers) ? info.papers : [];
+  if (!info.about && !papers.length && !info.fidelity) return null;
+  return (
+    <details className="about">
+      <summary>How it works{papers.length ? ` · ${papers.length} paper${papers.length > 1 ? "s" : ""}` : ""}</summary>
+      {info.about && <p>{info.about}</p>}
+      {papers.length > 0 && (
+        <>
+          <div className="about-h">Supporting papers</div>
+          <ul className="papers">
+            {papers.map((p, i) => (
+              <li key={i}>
+                {p.url ? <a href={p.url} target="_blank" rel="noopener noreferrer">{p.title}</a> : p.title}
+                <span className="muted"> · {[p.authors, p.venue, p.year && !String(p.venue ?? "").includes(String(p.year)) ? p.year : null].filter(Boolean).join(", ")}</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      {info.fidelity && <><div className="about-h">How close to the paper</div><p className="muted">{info.fidelity}</p></>}
+      {origin && origin !== "built-in" && <p className="muted">Origin: {origin}</p>}
+    </details>
   );
 }
 
